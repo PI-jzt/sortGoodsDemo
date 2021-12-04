@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        body {
+            width: 1000px;
+            margin: 0 auto;
+            background-color: #999988;
+        }
+        
+        .box .column {
+            float: left;
+            width: 300px;
+        }
+        
+        .box .column:nth-child(3) {
+            margin-left: 0;
+        }
+        
+        .box .column a {
+            display: block;
+            box-sizing: border-box;
+            padding: 5px;
+            margin-left: 4px;
+            background-color: white;
+            margin-bottom: 5px;
+        }
+        
+        .box .column img {
+            width: 100%;
+            display: none;
+        }
+        
+        .box .column p {
+            color: black;
+            font-size: 16px;
+        }
+        
+        .clear::after {
+            content: '';
+            display: table;
+            clear: both;
+        }
+        
+        .imgDiv {
+            background: url('img/lol/webp (4).webp') no-repeat;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="box clear">
+        <div class="column">
+
+        </div>
+        <div class="column ">
+
+        </div>
+        <div class="column">
+
+        </div>
+
+
+    </div>
+    <script src="node_modules/jquery/dist/jquery.min.js "></script>
+    <script>
+        let flowModule = (function() {
+            let $column = $('.column')
+            let _data = null
+            let antishake = true
+            let getQueryData = function() {
+                $.ajax({
+                    url: 'json/getLOLImg.json',
+                    method: "GET",
+                    async: false,
+                    success: result => _data = result,
+                    type: 'json'
+
+                })
+            }
+            let bindHtml = function() {
+                console.log(_data);
+
+                for (let index = 0; index < _data.length; index += 3) {
+                    $column.sort((a, b) => {
+                        return $(a).outerHeight() - $(b).outerHeight()
+                    }).each((i, item) => {
+                        if (!_data[index + i]) return false
+                        $(item).append(`<a href="#">
+                                <div class="imgDiv" style="height:${_data[index+i].height}px"><img src="" targetSrc ='${_data[index+i].url}' alt=""></div>
+                                <p>${_data[index+i].msg}</p>
+                            </a>`)
+                    })
+
+                }
+                //数据加载后开启图片懒加载
+                lazyImg();
+                //数据防抖关闭
+                antishake = true
+            }
+            let lazyImg = function() {
+
+                let imgArr = $('.imgDiv img')
+                imgArr.each((index, item) => {
+                    let imgH = $(item).parent().offset().top + $(item).parent().outerHeight()
+                    let scrollH = $(window).outerHeight() + $('html').scrollTop()
+                    if (scrollH >= imgH && $(item).attr('statu') != '1') {
+
+                        $(item).attr('src', $(item).attr('targetSrc'))
+                        $(item).attr('statu', '1')
+                        $(item).on('load', function() {
+                            $(item).stop().fadeIn()
+                        })
+                    }
+                })
+
+
+
+            }
+            return {
+                init() {
+                    getQueryData();
+                    bindHtml();
+                    $(window).on('scroll', function() {
+                        lazyImg()
+                        let htmlCli = $(window).outerHeight() + $('html').scrollTop()
+                        let htmlContetnHeight = $('html').outerHeight()
+                        if (htmlCli + 20 >= htmlContetnHeight && antishake) {
+                            //开启数据防抖
+                            antishake = false
+                            getQueryData()
+                            bindHtml()
+
+                        }
+
+                    })
+                },
+
+
+            }
+        })()
+        flowModule.init();
+    </script>
+</body>
+
+</html>
